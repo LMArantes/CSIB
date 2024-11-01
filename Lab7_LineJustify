@@ -1,0 +1,119 @@
+// Strings Lab: Text Justification with File I/O
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <ctime>
+#include <cstdlib>
+
+using namespace std;
+
+const int MAX_LEN = 90;
+const int MIN_LEN = 40;
+
+int main() {
+    string inPath, outPath;
+    cout << "Input file: ";
+    getline(cin, inPath);
+    cout << "Output file: ";
+    getline(cin, outPath);
+    ifstream inFile(inPath);
+
+    // error handling
+    if (!inFile) {
+        cout << "error" << endl;
+        return 1;
+    }
+    ofstream outFile(outPath);
+    if (!outFile) {
+        cout << "error" << endl;
+        return 1;
+    }
+    string txt((istreambuf_iterator<char>(inFile)),
+               istreambuf_iterator<char>());
+    inFile.close();
+    string procTxt;
+    for (size_t i = 0; i < txt.length(); ++i) {
+        procTxt += txt[i];
+        if (txt[i] == '.' || txt[i] == ',' || txt[i] == '!' ||
+            txt[i] == '?' || txt[i] == ';') {
+            if (i + 1 < txt.length() && txt[i + 1] != ' ' && txt[i + 1] != '\n') {
+                procTxt += ' ';
+                procTxt += ' ';
+            }
+        }
+    }
+    vector<string> words;
+    string w;
+    for (size_t i = 0; i < procTxt.length(); ++i) {
+        if (procTxt[i] != ' ' && procTxt[i] != '\n') {
+            w += procTxt[i];
+        } else {
+            if (!w.empty()) {
+                words.push_back(w);
+                w.clear();
+            }
+            if (procTxt[i] == '\n') {
+                words.push_back("\n");
+            }
+        }
+    }
+    if (!w.empty()) {
+        words.push_back(w);
+    }
+    vector<string> lines;
+    string line;
+    size_t idx = 0;
+    while (idx < words.size()) {
+        if (words[idx] == "\n") {
+            if (!line.empty()) {
+                lines.push_back(line);
+                line.clear();
+            }
+            lines.push_back("");
+            ++idx;
+        } else {
+            if (line.empty()) {
+                line = words[idx];
+            } else {
+                if (line.length() + 1 + words[idx].length() <= MAX_LEN) {
+                    line += ' ' + words[idx];
+                } else {
+                    lines.push_back(line);
+                    line = words[idx];
+                }
+            }
+            ++idx;
+        }
+    }
+    if (!line.empty()) {
+        lines.push_back(line);
+    }
+    srand(static_cast<unsigned int>(time(nullptr)));
+    for (size_t i = 0; i < lines.size(); ++i) {
+        string l = lines[i];
+        if (l.empty() || l.length() < MIN_LEN) {
+            outFile << l << endl;
+            continue;
+        }
+        while (l.length() < MAX_LEN) {
+            vector<size_t> spaces;
+            for (size_t j = 0; j < l.length() - 1; ++j) {
+                if (l[j] == ' ' && l[j + 1] != ' ') {
+                    spaces.push_back(j);
+                }
+            }
+            if (spaces.empty()) {
+                break;
+            }
+            size_t r = rand() % spaces.size();
+            size_t pos = spaces[r];
+            l.insert(pos, " ");
+        }
+        outFile << l << endl;
+    }
+    outFile.close();
+    cout << "done" << endl;
+    return 0;
+}
